@@ -144,10 +144,20 @@ const competitionGroups = Array.from(
 				align-items: start;
 			}
 
+			:global(body.blog-filters-open) {
+				overflow: hidden;
+			}
+
 			.sidebar {
 				position: sticky;
 				top: 1rem;
 				align-self: start;
+			}
+
+			.sidebar-mobile-header,
+			.mobile-filter-toggle,
+			.mobile-filter-backdrop {
+				display: none;
 			}
 
 			.sidebar-inner {
@@ -367,6 +377,114 @@ const competitionGroups = Array.from(
 					padding-inline: 0.5rem;
 				}
 
+				.sidebar {
+					position: fixed;
+					left: 0.75rem;
+					top: calc(var(--site-header-height, 4.5rem) + 0.75rem);
+					bottom: 0.75rem;
+					width: min(320px, calc(100vw - 5.5rem));
+					max-width: calc(100vw - 5.5rem);
+					padding: 0.75rem;
+					border: 1px solid rgba(var(--gray-light), 0.92);
+					border-radius: 18px;
+					background: rgba(var(--surface-rgb), 0.94);
+					backdrop-filter: blur(16px);
+					box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+					box-sizing: border-box;
+					z-index: 45;
+					transform: translateX(calc(-100% - 1rem));
+					opacity: 0;
+					pointer-events: none;
+					transition:
+						transform 0.22s ease,
+						opacity 0.22s ease;
+				}
+
+				.sidebar[data-mobile-open='true'] {
+					transform: translateX(0);
+					opacity: 1;
+					pointer-events: auto;
+				}
+
+				.sidebar-mobile-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					gap: 0.75rem;
+					margin-bottom: 0.8rem;
+				}
+
+				.sidebar-mobile-title {
+					margin: 0;
+					font-size: 0.95rem;
+					font-weight: 700;
+					color: rgb(var(--black));
+				}
+
+				.sidebar-mobile-close,
+				.mobile-filter-toggle {
+					width: 2.65rem;
+					height: 2.65rem;
+					padding: 0;
+					border: 1px solid rgb(var(--gray-light));
+					border-radius: 999px;
+					background: rgba(var(--surface-rgb), 0.94);
+					backdrop-filter: blur(14px);
+					box-shadow: 0 12px 26px rgba(0, 0, 0, 0.14);
+					color: rgb(var(--black));
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					cursor: pointer;
+				}
+
+				.sidebar-mobile-close svg,
+				.mobile-filter-toggle svg {
+					width: 1rem;
+					height: 1rem;
+				}
+
+				.sidebar-inner {
+					max-height: calc(100dvh - var(--site-header-height, 4.5rem) - 4.4rem);
+					overflow-y: auto;
+					padding-right: 0.1rem;
+				}
+
+				.mobile-filter-toggle {
+					position: fixed;
+					left: 1rem;
+					bottom: 1rem;
+					z-index: 41;
+					transition:
+						transform 0.18s ease,
+						box-shadow 0.18s ease,
+						opacity 0.18s ease;
+				}
+
+				.mobile-filter-toggle:hover,
+				.sidebar-mobile-close:hover {
+					transform: translateY(-1px);
+					box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+				}
+
+				:global(body.blog-filters-open) .mobile-filter-toggle {
+					opacity: 0;
+					pointer-events: none;
+				}
+
+				.mobile-filter-backdrop[hidden] {
+					display: none;
+				}
+
+				.mobile-filter-backdrop {
+					position: fixed;
+					inset: 0;
+					border: 0;
+					background: rgba(var(--press-rgb), 0.2);
+					backdrop-filter: blur(2px);
+					z-index: 44;
+				}
+
 				.post-link {
 					padding: 1rem;
 				}
@@ -385,7 +503,17 @@ const competitionGroups = Array.from(
 		<Header />
 		<main>
 			<div class="blog-directory">
-				<aside class="sidebar">
+				<aside class="sidebar" id="blog-sidebar" data-mobile-open="false">
+					<div class="sidebar-mobile-header">
+						<p class="sidebar-mobile-title">Filters</p>
+						<button class="sidebar-mobile-close" type="button" data-mobile-filter-close aria-label="Close filters">
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M6.75 6.75 17.25 17.25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.9" />
+								<path d="M17.25 6.75 6.75 17.25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.9" />
+							</svg>
+							<span class="sr-only">Close filters</span>
+						</button>
+					</div>
 					<div class="sidebar-inner">
 						<details class="filter-group" open>
 							<summary>Categories</summary>
@@ -469,6 +597,18 @@ const competitionGroups = Array.from(
 				</section>
 			</div>
 		</main>
+		<button class="mobile-filter-toggle" type="button" data-mobile-filter-toggle aria-controls="blog-sidebar" aria-expanded="false" aria-label="Open filters">
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M4.75 6.75h14.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.9" />
+				<path d="M8 12h11.25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.9" />
+				<path d="M11.25 17.25h8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.9" />
+				<circle cx="7" cy="6.75" r="1.35" fill="currentColor" />
+				<circle cx="10.25" cy="12" r="1.35" fill="currentColor" />
+				<circle cx="13.5" cy="17.25" r="1.35" fill="currentColor" />
+			</svg>
+			<span class="sr-only">Open filters</span>
+		</button>
+		<button class="mobile-filter-backdrop" type="button" data-mobile-filter-backdrop aria-label="Close filters" hidden></button>
 		<FloatingActions />
 
 		<script is:inline>
@@ -476,8 +616,28 @@ const competitionGroups = Array.from(
 			const yearGroups = Array.from(document.querySelectorAll('.year-group'));
 			const cards = Array.from(document.querySelectorAll('.post-card'));
 			const emptyState = document.getElementById('empty-state');
+			const sidebar = document.getElementById('blog-sidebar');
+			const mobileFilterToggle = document.querySelector('[data-mobile-filter-toggle]');
+			const mobileFilterClose = document.querySelector('[data-mobile-filter-close]');
+			const mobileFilterBackdrop = document.querySelector('[data-mobile-filter-backdrop]');
+			const mobileFilterQuery = window.matchMedia('(max-width: 720px)');
 
 			let activeFilter = null;
+
+			const setMobileFiltersOpen = (open) => {
+				const next = mobileFilterQuery.matches && open;
+
+				sidebar?.setAttribute('data-mobile-open', next ? 'true' : 'false');
+				mobileFilterToggle?.setAttribute('aria-expanded', next ? 'true' : 'false');
+				mobileFilterBackdrop && (mobileFilterBackdrop.hidden = !next);
+				document.body.classList.toggle('blog-filters-open', next);
+			};
+
+			const syncMobileFilters = () => {
+				if (!mobileFilterQuery.matches) {
+					setMobileFiltersOpen(false);
+				}
+			};
 
 			const renderButtons = () => {
 				filterButtons.forEach((button) => {
@@ -549,11 +709,30 @@ const competitionGroups = Array.from(
 
 					render();
 					scrollToTop();
+					if (mobileFilterQuery.matches) {
+						setMobileFiltersOpen(false);
+					}
 					button.blur();
 				});
 			});
 
+			mobileFilterToggle?.addEventListener('click', () => {
+				const open = sidebar?.getAttribute('data-mobile-open') === 'true';
+				setMobileFiltersOpen(!open);
+			});
+
+			mobileFilterClose?.addEventListener('click', () => setMobileFiltersOpen(false));
+			mobileFilterBackdrop?.addEventListener('click', () => setMobileFiltersOpen(false));
+			mobileFilterQuery.addEventListener('change', syncMobileFilters);
+
+			window.addEventListener('keydown', (event) => {
+				if (event.key === 'Escape') {
+					setMobileFiltersOpen(false);
+				}
+			});
+
 			render();
+			syncMobileFilters();
 		</script>
 	</body>
 </html>
