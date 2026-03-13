@@ -132,8 +132,9 @@ const competitionGroups = Array.from(
 			}
 
 			main {
-				width: 1120px;
-				max-width: calc(100% - 2em);
+				width: min(1120px, calc(100% - 2em));
+				max-width: 100%;
+				box-sizing: border-box;
 			}
 
 			.blog-directory {
@@ -361,7 +362,9 @@ const competitionGroups = Array.from(
 
 			@media (max-width: 720px) {
 				main {
-					max-width: calc(100% - 1rem);
+					width: 100%;
+					max-width: 100%;
+					padding-inline: 0.5rem;
 				}
 
 				.post-link {
