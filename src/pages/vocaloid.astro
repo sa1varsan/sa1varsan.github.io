@@ -1,0 +1,153 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import FloatingActions from '../components/FloatingActions.astro';
+import Header from '../components/Header.astro';
+import NeteaseFloatingPlayer from '../components/NeteaseFloatingPlayer.astro';
+
+const basePath = import.meta.env.BASE_URL;
+const images = Array.from({ length: 8 }, (_, index) => `${basePath}vocaloid/vocaloid-${String(index + 1).padStart(2, '0')}.jpeg`);
+const initialImage = images[0];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title="Vocaloid" description="Random Vocaloid image viewer. Click the image to refresh." />
+	</head>
+	<body>
+		<Header />
+		<main class="viewer-page">
+			<section class="viewer" id="vocaloid-viewer" data-images={JSON.stringify(images)}>
+				<div class="viewer-copy">
+					<h1>Vocaloid</h1>
+					<p>tap the picture</p>
+				</div>
+				<button class="image-stage" id="image-stage" type="button" aria-label="Show another random Vocaloid image">
+					<img id="vocaloid-random-image" src={initialImage} alt="Random Vocaloid illustration" loading="eager" />
+				</button>
+			</section>
+		</main>
+		<NeteaseFloatingPlayer playlistId="17827162522" />
+		<FloatingActions />
+
+		<script is:inline>
+			const viewer = document.getElementById('vocaloid-viewer');
+			const imageStage = document.getElementById('image-stage');
+			const image = document.getElementById('vocaloid-random-image');
+			const images = viewer ? JSON.parse(viewer.getAttribute('data-images') ?? '[]') : [];
+
+			const pickRandomImage = () => {
+				if (!image || images.length === 0) return;
+
+				const current = image.getAttribute('src') ?? '';
+				const candidates = images.filter((item) => item !== current);
+				const pool = candidates.length > 0 ? candidates : images;
+				const next = pool[Math.floor(Math.random() * pool.length)] ?? images[0];
+
+				image.setAttribute('src', next);
+			};
+
+			pickRandomImage();
+			imageStage?.addEventListener('click', pickRandomImage);
+		</script>
+	</body>
+</html>
+
+<style>
+	:global(html),
+	:global(body) {
+		height: 100%;
+	}
+
+	:global(body) {
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		overflow: hidden;
+	}
+
+	.viewer-page {
+		width: 100vw;
+		max-width: none;
+		height: 100%;
+		min-height: 0;
+		margin: 0;
+		padding: 0;
+	}
+
+	.viewer {
+		height: 100%;
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		gap: 0.35rem;
+		padding: 0.65rem 1rem 1rem;
+		box-sizing: border-box;
+	}
+
+	.viewer-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 0.12rem;
+	}
+
+	.viewer-copy h1 {
+		margin: 0;
+		font-size: 1.05rem;
+		font-weight: 700;
+	}
+
+	.viewer-copy p {
+		margin: 0;
+		font-size: 0.82rem;
+		color: rgb(var(--gray));
+	}
+
+	.image-stage {
+		width: 100%;
+		height: 100%;
+		min-height: 0;
+		padding: 0;
+		border: 0;
+		outline: none;
+		appearance: none;
+		-webkit-appearance: none;
+		box-shadow: none;
+		border-radius: 0;
+		background: transparent;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		overflow: hidden;
+	}
+
+	.image-stage:focus,
+	.image-stage:focus-visible {
+		outline: none;
+	}
+
+	.image-stage img {
+		display: block;
+		width: auto;
+		height: auto;
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+		border-radius: 0;
+		user-select: none;
+		-webkit-user-drag: none;
+	}
+
+	@media (max-width: 720px) {
+		.viewer {
+			padding: 0.55rem 0.7rem 0.8rem;
+		}
+
+		.viewer-copy h1 {
+			font-size: 0.98rem;
+		}
+
+		.viewer-copy p {
+			font-size: 0.78rem;
+		}
+	}
+</style>

@@ -1,0 +1,230 @@
+---
+import { loadNeteasePlaylist } from '../utils/neteasePlaylist';
+
+const { playlistId } = Astro.props as { playlistId: string };
+
+const cardId = `about-playlist-${playlistId}`;
+const playlist = await loadNeteasePlaylist(playlistId);
+const initialCoverImage = playlist.tracks[0]?.coverImage || playlist.coverImage;
+const payload = JSON.stringify(playlist);
+---
+
+<aside class="about-playlist" id={cardId} data-playlist={payload}>
+	<button
+		class="about-playlist__cover"
+		type="button"
+		data-toggle
+		aria-label="Play or pause a random playlist track"
+		disabled={playlist.tracks.length === 0}
+	>
+		<img data-cover-image src={initialCoverImage} alt="Playlist cover" loading="lazy" hidden={!initialCoverImage} />
+		<span class="about-playlist__fallback" data-cover-fallback aria-hidden="true" hidden={Boolean(initialCoverImage)}>N</span>
+		<span class="about-playlist__state" data-state-indicator data-state="paused" aria-hidden="true">
+			<svg class="about-playlist__state-icon about-playlist__state-icon--play" viewBox="0 0 24 24">
+				<path d="M8 6.5v11l9-5.5-9-5.5Z" fill="currentColor" />
+			</svg>
+			<svg class="about-playlist__state-icon about-playlist__state-icon--pause" viewBox="0 0 24 24">
+				<path d="M8 6h3v12H8z" fill="currentColor" />
+				<path d="M13 6h3v12h-3z" fill="currentColor" />
+			</svg>
+		</span>
+	</button>
+	<audio data-audio preload="none" src={playlist.tracks[0]?.audioSrc}></audio>
+</aside>
+
+<script is:inline define:vars={{ cardId }}>
+	const root = document.getElementById(cardId);
+
+	if (root) {
+		const playlist = JSON.parse(root.getAttribute('data-playlist') ?? '{"tracks": []}');
+		const tracks = Array.isArray(playlist.tracks) ? playlist.tracks : [];
+		const toggle = root.querySelector('[data-toggle]');
+		const audio = root.querySelector('[data-audio]');
+		const coverImage = root.querySelector('[data-cover-image]');
+		const coverFallback = root.querySelector('[data-cover-fallback]');
+		const stateIndicator = root.querySelector('[data-state-indicator]');
+
+		let currentIndex = -1;
+
+		const syncState = () => {
+			const playing = Boolean(audio && !audio.paused && !audio.ended);
+
+			if (toggle) {
+				toggle.setAttribute('aria-label', playing ? 'Pause current track' : 'Play random track');
+			}
+
+			if (stateIndicator) {
+				stateIndicator.dataset.state = playing ? 'playing' : 'paused';
+			}
+		};
+
+		const syncCover = (track) => {
+			const nextCover = track?.coverImage || playlist.coverImage || '';
+
+			if (!coverImage) {
+				return;
+			}
+
+			if (nextCover) {
+				coverImage.setAttribute('src', nextCover);
+				coverImage.setAttribute('alt', `${track?.title ?? playlist.title} cover`);
+				coverImage.removeAttribute('hidden');
+				coverFallback?.setAttribute('hidden', '');
+			} else {
+				coverImage.setAttribute('hidden', '');
+				coverFallback?.removeAttribute('hidden');
+			}
+		};
+
+		const pickRandomIndex = () => {
+			if (tracks.length === 0) {
+				return -1;
+			}
+
+			if (tracks.length === 1) {
+				return 0;
+			}
+
+			let nextIndex = currentIndex;
+
+			while (nextIndex === currentIndex) {
+				nextIndex = Math.floor(Math.random() * tracks.length);
+			}
+
+			return nextIndex;
+		};
+
+		const setTrack = (index) => {
+			if (!audio || index < 0 || index >= tracks.length) {
+				return;
+			}
+
+			currentIndex = index;
+			audio.src = tracks[index].audioSrc;
+			audio.load();
+			syncCover(tracks[index]);
+			syncState();
+		};
+
+		const togglePlayback = () => {
+			if (!audio || tracks.length === 0) {
+				return;
+			}
+
+			if (currentIndex === -1) {
+				setTrack(pickRandomIndex());
+			}
+
+			if (audio.paused) {
+				audio.play().then(syncState).catch(syncState);
+				return;
+			}
+
+			audio.pause();
+			syncState();
+		};
+
+		const advanceRandomTrack = () => {
+			if (!audio || tracks.length === 0) {
+				return;
+			}
+
+			const nextIndex = pickRandomIndex();
+
+			if (nextIndex === -1) {
+				syncState();
+				return;
+			}
+
+			setTrack(nextIndex);
+			audio.play().then(syncState).catch(syncState);
+		};
+
+		if (tracks.length > 0) {
+			setTrack(pickRandomIndex());
+		}
+
+		toggle?.addEventListener('click', togglePlayback);
+		audio?.addEventListener('play', syncState);
+		audio?.addEventListener('pause', syncState);
+		audio?.addEventListener('ended', advanceRandomTrack);
+		audio?.addEventListener('error', advanceRandomTrack);
+	}
+</script>
+
+<style>
+	.about-playlist {
+		width: 100%;
+		align-self: end;
+	}
+
+	.about-playlist__cover {
+		position: relative;
+		display: block;
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		padding: 0;
+		border: 1px solid rgba(var(--gray-light), 0.9);
+		border-radius: 18px;
+		background: rgba(var(--surface-rgb), 0.92);
+		box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+		cursor: pointer;
+		overflow: hidden;
+	}
+
+	.about-playlist__cover:disabled {
+		cursor: default;
+		opacity: 0.6;
+	}
+
+	.about-playlist__cover img,
+	.about-playlist__fallback {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.about-playlist__cover img {
+		object-fit: cover;
+	}
+
+	.about-playlist__fallback {
+		display: grid;
+		place-items: center;
+		font-size: 1.2rem;
+		font-weight: 700;
+		color: rgb(var(--gray-dark));
+	}
+
+	.about-playlist__state {
+		position: absolute;
+		right: 0.65rem;
+		bottom: 0.65rem;
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 999px;
+		background: rgba(var(--black), 0.82);
+		color: rgb(var(--surface-rgb));
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+	}
+
+	.about-playlist__state-icon {
+		width: 0.95rem;
+		height: 0.95rem;
+		display: none;
+	}
+
+	.about-playlist__state[data-state='paused'] .about-playlist__state-icon--play,
+	.about-playlist__state[data-state='playing'] .about-playlist__state-icon--pause {
+		display: block;
+	}
+
+	@media (max-width: 720px) {
+		.about-playlist {
+			width: min(10.5rem, 56vw);
+			justify-self: start;
+		}
+	}
+</style>

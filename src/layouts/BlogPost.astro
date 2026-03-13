@@ -1,0 +1,108 @@
+---
+import { Image } from 'astro:assets';
+import BaseHead from '../components/BaseHead.astro';
+import FloatingActions from '../components/FloatingActions.astro';
+import Header from '../components/Header.astro';
+import PostMetaBadges from '../components/PostMetaBadges.astro';
+
+const {
+	title,
+	subtitle,
+	description,
+	heroImage,
+	topic,
+	competition,
+	reviewLabel,
+	sourceStatus,
+} = Astro.props;
+
+const basePath = import.meta.env.BASE_URL;
+const normalizedPath = Astro.url.pathname.replace(basePath, '/');
+const showBack = normalizedPath.startsWith('/blog/') && normalizedPath !== '/blog/';
+---
+
+<html lang="en">
+	<head>
+		<BaseHead title={title} description={description} />
+		<style>
+			main {
+				width: calc(100% - 2em);
+				max-width: 100%;
+				margin: 0;
+			}
+			.hero-image {
+				width: 100%;
+			}
+			.hero-image img {
+				display: block;
+				margin: 0 auto;
+				border-radius: 12px;
+				box-shadow: var(--box-shadow);
+			}
+			.prose {
+				width: 720px;
+				max-width: calc(100% - 2em);
+				margin: auto;
+				padding: 1em;
+				color: rgb(var(--gray-dark));
+			}
+			.title-meta {
+				display: flex;
+				justify-content: center;
+				margin-bottom: 0.8rem;
+			}
+			.title {
+				margin-bottom: 1em;
+				padding: 1em 0;
+				text-align: center;
+				line-height: 1;
+			}
+			.title h1 {
+				margin: 0 0 0.5em 0;
+			}
+			.page-subtitle {
+				margin: -0.1rem 0 0.95rem;
+				font-size: 0.76rem;
+				line-height: 1.35;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: rgb(var(--gray));
+			}
+			@media (max-width: 720px) {
+				.prose {
+					padding: 0.75em;
+				}
+				.page-subtitle {
+					font-size: 0.72rem;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<Header />
+		<main>
+			<article>
+				<div class="hero-image">
+					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
+				</div>
+				<div class="prose">
+					<div class="title">
+						{
+							competition && topic && (
+								<div class="title-meta">
+									<PostMetaBadges competition={competition} topic={topic} reviewLabel={reviewLabel} sourceStatus={sourceStatus} />
+								</div>
+							)
+						}
+						<h1>{title}</h1>
+						{subtitle && <p class="page-subtitle">{subtitle}</p>}
+						<hr />
+					</div>
+					<slot />
+				</div>
+			</article>
+		</main>
+		<FloatingActions showBack={showBack} backHref={`${basePath}blog/`} />
+	</body>
+</html>

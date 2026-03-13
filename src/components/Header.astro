@@ -1,0 +1,93 @@
+---
+import { SITE_TITLE } from '../consts';
+import HeaderLink from './HeaderLink.astro';
+
+const homeHref = `${import.meta.env.BASE_URL}`;
+const blogsHref = `${import.meta.env.BASE_URL}blog/`;
+const aboutHref = `${import.meta.env.BASE_URL}about/`;
+const vocaloidHref = `${import.meta.env.BASE_URL}vocaloid/`;
+---
+
+<header data-site-header>
+	<nav>
+		<h2><a href={homeHref}>{SITE_TITLE}</a></h2>
+		<div class="internal-links">
+			<HeaderLink href={homeHref}>Home</HeaderLink>
+			<HeaderLink href={blogsHref}>Blogs</HeaderLink>
+			<HeaderLink href={vocaloidHref}>Vocaloid</HeaderLink>
+			<HeaderLink href={aboutHref}>About</HeaderLink>
+		</div>
+	</nav>
+</header>
+<script is:inline>
+	const syncHeaderHeight = () => {
+		const header = document.querySelector('[data-site-header]');
+		if (!header) return;
+		document.documentElement.style.setProperty('--site-header-height', `${header.getBoundingClientRect().height}px`);
+	};
+
+	syncHeaderHeight();
+	window.addEventListener('load', syncHeaderHeight);
+	window.addEventListener('resize', syncHeaderHeight);
+</script>
+<style>
+	:global(:root) {
+		--site-header-height: 4.5rem;
+	}
+
+	header {
+		margin: 0;
+		padding: 0 1em;
+		background: rgba(var(--surface-rgb), 0.88);
+		backdrop-filter: blur(14px);
+		border-bottom: 1px solid rgba(var(--gray-light), 0.9);
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+		position: sticky;
+		top: 0;
+		z-index: 30;
+	}
+	h2 {
+		margin: 0;
+		font-size: 1em;
+	}
+
+	h2 a,
+	h2 a.active {
+		color: rgb(var(--black));
+		text-decoration: none;
+	}
+	nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	nav a {
+		padding: 1em 0.5em;
+		color: rgb(var(--black));
+		border-bottom: 4px solid transparent;
+		border-radius: 8px 8px 0 0;
+		text-decoration: none;
+		transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+	}
+	nav a:hover {
+		background: rgba(var(--press-rgb), 0.06);
+	}
+	nav a.active {
+		text-decoration: none;
+		border-bottom-color: var(--accent);
+		background: rgba(var(--accent-rgb), 0.08);
+	}
+	.internal-links {
+		display: flex;
+		gap: 0.25rem;
+	}
+	@media (max-width: 720px) {
+		nav {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+		.internal-links {
+			flex-wrap: wrap;
+		}
+	}
+</style>

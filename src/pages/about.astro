@@ -1,0 +1,161 @@
+---
+import AboutPlaylistCard from '../components/AboutPlaylistCard.astro';
+import Layout from '../layouts/BlogPost.astro';
+---
+
+<Layout title="About" subtitle="Crypto major | INTP | Vocaloid fan">
+	<section class="about-copy">
+		<div class="about-body">
+			<div class="about-main">
+				<p class="about-kicker">Welcome to my corner.</p>
+				<p class="about-paragraph">
+					I am an undergraduate in cryptography and information security, exploring the deep logic of theoretical cryptography and the beauty of mathematical structures. My world lies between rigorous proofs and literary creation—equal parts algorithm, cipher, and quiet prose.
+				</p>
+				<p class="about-paragraph">
+					I find peace in slow, well-orchestrated music, rainy days, long walks, and writing words with restraint and sincerity. This blog is where I record my study notes, research thoughts, literary fragments, and the gentle rhythm of daily life.
+				</p>
+				<p class="about-closing">Stay a while.</p>
+			</div>
+			<AboutPlaylistCard playlistId="17827162522" />
+		</div>
+		<div class="about-links" aria-label="Contact links">
+			<a class="about-link" href="https://github.com/sa1varsan" target="_blank" rel="noreferrer">
+				<svg class="about-link__icon" viewBox="0 0 24 24" aria-hidden="true">
+					<path
+						d="M12 2.5a9.5 9.5 0 0 0-3 18.52c.47.09.64-.2.64-.45 0-.22-.01-.95-.01-1.73-2.35.43-2.96-.57-3.15-1.09-.11-.29-.56-1.09-.96-1.31-.32-.17-.78-.6-.01-.62.72-.01 1.23.66 1.4.94.82 1.38 2.13.99 2.65.76.08-.6.32-.99.58-1.22-2.08-.24-4.26-1.04-4.26-4.63 0-1.02.36-1.86.96-2.51-.1-.24-.42-1.21.09-2.52 0 0 .78-.25 2.56.96a8.82 8.82 0 0 1 4.66 0c1.78-1.22 2.56-.96 2.56-.96.51 1.31.19 2.28.09 2.52.6.65.96 1.49.96 2.51 0 3.6-2.19 4.39-4.27 4.62.33.29.63.84.63 1.7 0 1.23-.01 2.22-.01 2.53 0 .25.17.55.65.45A9.5 9.5 0 0 0 12 2.5Z"
+						fill="currentColor"
+					/>
+				</svg>
+				<span>github.com/sa1varsan</span>
+			</a>
+			<a class="about-link" href="mailto:sa1varsan@outlook.com">
+				<svg class="about-link__icon" viewBox="0 0 24 24" aria-hidden="true">
+					<path
+						d="M4 6.75h16a1.25 1.25 0 0 1 1.25 1.25v8a1.25 1.25 0 0 1-1.25 1.25H4A1.25 1.25 0 0 1 2.75 16V8A1.25 1.25 0 0 1 4 6.75Zm0 1.5-.12.01L12 13.69l8.12-5.43V8A.25.25 0 0 0 20 7.75H4A.25.25 0 0 0 3.75 8v.26L11.58 13.5c.25.17.58.17.84 0l7.83-5.24V16a.25.25 0 0 1-.25.25H4A.25.25 0 0 1 3.75 16V8.26Z"
+						fill="currentColor"
+					/>
+				</svg>
+				<span>sa1varsan@outlook.com</span>
+			</a>
+		</div>
+	</section>
+</Layout>
+
+<style>
+	.about-copy {
+		display: flex;
+		flex-direction: column;
+		margin-top: -0.45rem;
+	}
+
+	.about-body {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(11.5rem, 12.25rem);
+		gap: 2rem;
+		align-items: end;
+	}
+
+	.about-main {
+		min-width: 0;
+	}
+
+	.about-main p {
+		max-width: none;
+		margin: 0;
+		line-height: 1.85;
+		text-wrap: pretty;
+	}
+
+	.about-kicker {
+		font-size: 0.9rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+		margin-bottom: 0.85rem;
+	}
+
+	.about-paragraph {
+		text-indent: 2em;
+		margin-bottom: 1.35rem;
+	}
+
+	.about-closing {
+		font-size: 1.08rem;
+		font-weight: 700;
+		color: rgb(var(--black));
+		margin-top: 0.2rem;
+	}
+
+	.about-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem 0.9rem;
+		margin-top: 1.35rem;
+		padding-top: 0.85rem;
+		border-top: 1px solid rgba(var(--gray-light), 0.9);
+	}
+
+	.about-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.38rem;
+		font-size: 0.78rem;
+		line-height: 1.3;
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+
+	.about-link:hover {
+		color: rgb(var(--black));
+	}
+
+	.about-link__icon {
+		width: 0.82rem;
+		height: 0.82rem;
+		flex: 0 0 auto;
+	}
+
+	@media (max-width: 300px) {
+		.about-copy {
+			margin-top: -0.2rem;
+		}
+
+		.about-body {
+			grid-template-columns: 1fr;
+			gap: 1rem;
+		}
+
+		.about-main {
+			order: 2;
+		}
+
+		.about-main p {
+			max-width: none;
+			line-height: 1.75;
+		}
+
+		.about-kicker {
+			font-size: 0.82rem;
+			margin-bottom: 0.45rem;
+		}
+
+		.about-closing {
+			font-size: 1rem;
+		}
+
+		.about-links {
+			gap: 0.42rem 0.75rem;
+			margin-top: 1.1rem;
+			padding-top: 0.75rem;
+		}
+
+		.about-subtitle {
+			font-size: 0.72rem;
+		}
+
+		.about-link {
+			font-size: 0.74rem;
+		}
+	}
+</style>

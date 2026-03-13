@@ -1,0 +1,556 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import FloatingActions from '../../components/FloatingActions.astro';
+import Header from '../../components/Header.astro';
+import PostMetaBadges from '../../components/PostMetaBadges.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) =>
+		b.data.timeOrder - a.data.timeOrder ||
+		b.data.pubDate.valueOf() - a.data.pubDate.valueOf() ||
+		a.data.title.localeCompare(b.data.title, 'zh-CN'),
+);
+
+const basePath = import.meta.env.BASE_URL;
+const SERIES_COMPETITIONS = new Set(['CryptoHack']);
+
+const topicOrder = [
+	'Competition Retrospective',
+	'Secret Sharing',
+	'Lattice Cryptanalysis',
+	'Post-Quantum Cryptography',
+	'Classical Cryptanalysis',
+	'Oracle Attack',
+	'RSA & Number Theory',
+	'Elliptic Curve Cryptography',
+	'Matrix Cryptography',
+	'Knapsack Cryptography',
+	'Permutation Group Cryptography',
+	'RNG Attack',
+	'Side-Channel Attack',
+	'Garbled Circuits',
+	'Zero-Knowledge',
+];
+
+const getCompetitionGroupLabel = (post: (typeof posts)[number]) =>
+	SERIES_COMPETITIONS.has(post.data.competition) ? 'Series' : post.data.timeLabel;
+
+const getCompetitionGroupOrder = (post: (typeof posts)[number]) =>
+	SERIES_COMPETITIONS.has(post.data.competition) ? 0 : post.data.timeOrder;
+
+const topicCounts = posts.reduce((map, post) => {
+	map.set(post.data.topic, (map.get(post.data.topic) ?? 0) + 1);
+	return map;
+}, new Map<string, number>());
+
+const categoryOptions = [
+	...topicOrder.filter((topic) => topicCounts.has(topic)).map((topic) => ({
+		label: topic,
+		count: topicCounts.get(topic) ?? 0,
+	})),
+	...Array.from(topicCounts.entries())
+		.filter(([topic]) => !topicOrder.includes(topic))
+		.sort(([a], [b]) => a.localeCompare(b, 'en'))
+		.map(([label, count]) => ({ label, count })),
+];
+
+const competitionCounts = posts.reduce(
+	(map, post) => {
+		const current = map.get(post.data.competition);
+		if (current) {
+			current.count += 1;
+			current.order = Math.max(current.order, post.data.timeOrder);
+		} else {
+			map.set(post.data.competition, {
+				label: post.data.competition,
+				count: 1,
+				order: post.data.timeOrder,
+			});
+		}
+		return map;
+	},
+	new Map<string, { label: string; count: number; order: number }>(),
+);
+
+const competitionOptions = Array.from(competitionCounts.values()).sort(
+	(a, b) => b.order - a.order || a.label.localeCompare(b.label, 'zh-CN'),
+);
+
+const competitionGroups = Array.from(
+	posts.reduce((map, post) => {
+		const groupLabel = getCompetitionGroupLabel(post);
+		const groupOrder = getCompetitionGroupOrder(post);
+		const current = map.get(groupLabel);
+		if (current) {
+			current.order = Math.max(current.order, groupOrder);
+			current.count += 1;
+			current.competitions.set(post.data.competition, (current.competitions.get(post.data.competition) ?? 0) + 1);
+		} else {
+			map.set(groupLabel, {
+				label: groupLabel,
+				order: groupOrder,
+				count: 1,
+				competitions: new Map([[post.data.competition, 1]]),
+			});
+		}
+		return map;
+	}, new Map<string, { label: string; order: number; count: number; competitions: Map<string, number> }>()).values(),
+)
+	.sort((a, b) => b.order - a.order || a.label.localeCompare(b.label, 'zh-CN'))
+	.map((group) => ({
+		label: group.label,
+		order: group.order,
+		count: group.count,
+		competitions: Array.from(group.competitions.entries())
+			.sort(([nameA], [nameB]) => {
+				const orderA = competitionOptions.findIndex((item) => item.label === nameA);
+				const orderB = competitionOptions.findIndex((item) => item.label === nameB);
+				const normalizedA = orderA === -1 ? Number.MAX_SAFE_INTEGER : orderA;
+				const normalizedB = orderB === -1 ? Number.MAX_SAFE_INTEGER : orderB;
+				return normalizedA - normalizedB || nameA.localeCompare(nameB, 'zh-CN');
+			})
+			.map(([label, count]) => ({ label, count })),
+	}));
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			:global(html),
+			:global(body) {
+				scrollbar-width: none;
+				-ms-overflow-style: none;
+			}
+
+			:global(html::-webkit-scrollbar),
+			:global(body::-webkit-scrollbar) {
+				display: none;
+			}
+
+			main {
+				width: 1120px;
+				max-width: calc(100% - 2em);
+			}
+
+			.blog-directory {
+				display: grid;
+				grid-template-columns: minmax(220px, 250px) minmax(0, 1fr);
+				gap: 2rem;
+				align-items: start;
+			}
+
+			.sidebar {
+				position: sticky;
+				top: 1rem;
+				align-self: start;
+			}
+
+			.sidebar-inner {
+				max-height: calc(100vh - 2rem);
+				overflow-y: auto;
+				scrollbar-width: none;
+				-ms-overflow-style: none;
+				padding-right: 0.25rem;
+			}
+
+			.sidebar-inner::-webkit-scrollbar {
+				display: none;
+			}
+
+			details.filter-group + details.filter-group {
+				margin-top: 1.2rem;
+			}
+
+			.filter-group summary {
+				cursor: pointer;
+				font-size: 0.95rem;
+				font-weight: 700;
+				list-style: none;
+				margin-bottom: 0.75rem;
+			}
+
+			.filter-group summary::-webkit-details-marker {
+				display: none;
+			}
+
+			.filter-group summary::after {
+				content: '−';
+				float: right;
+				color: rgb(var(--gray));
+			}
+
+			.filter-group:not([open]) summary::after {
+				content: '+';
+			}
+
+			.filter-list {
+				display: flex;
+				flex-direction: column;
+				gap: 0.2rem;
+				padding-left: 0;
+			}
+
+			.filter-option {
+				appearance: none;
+				background: transparent;
+				border: 0;
+				border-radius: 10px;
+				box-shadow: inset 0 0 0 1px transparent;
+				color: rgb(var(--gray-dark));
+				cursor: pointer;
+				display: flex;
+				font-size: 0.92rem;
+				gap: 0.45rem;
+				justify-content: space-between;
+				padding: 0.58rem 0.7rem;
+				text-align: left;
+				transition:
+					background 0.18s ease,
+					box-shadow 0.18s ease,
+					color 0.18s ease,
+					transform 0.18s ease;
+				width: 100%;
+			}
+
+			.filter-option:hover {
+				background: rgba(var(--press-rgb), 0.06);
+				box-shadow:
+					inset 0 1px 0 rgba(255, 255, 255, 0.32),
+					inset 0 1px 2px rgba(var(--press-rgb), 0.14);
+				color: rgb(var(--black));
+				transform: translateY(1px);
+			}
+
+			.filter-option[data-active='true'] {
+				background: rgba(var(--press-rgb), 0.11);
+				box-shadow:
+					inset 0 1px 0 rgba(255, 255, 255, 0.2),
+					inset 0 2px 4px rgba(var(--press-rgb), 0.18);
+				color: rgb(var(--black));
+				font-weight: 700;
+				transform: translateY(1px);
+			}
+
+			.filter-count {
+				color: rgb(var(--gray));
+				font-size: 0.8rem;
+			}
+
+			.year-groups {
+				display: flex;
+				flex-direction: column;
+				gap: 0.55rem;
+			}
+
+			.year-group {
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+			}
+
+			.year-row {
+				display: block;
+			}
+
+			.year-option {
+				font-weight: 700;
+			}
+
+			.competition-sublist {
+				display: flex;
+				flex-direction: column;
+				gap: 0.2rem;
+				margin-left: 0.85rem;
+				padding-top: 0.15rem;
+			}
+
+			.year-group .competition-sublist {
+				opacity: 0;
+				max-height: 0;
+				overflow: hidden;
+				pointer-events: none;
+				transform: translateY(-4px);
+				transition:
+					opacity 0.16s ease,
+					max-height 0.16s ease,
+					transform 0.16s ease;
+			}
+
+			.year-group:hover .competition-sublist,
+			.year-group[data-expanded='true'] .competition-sublist {
+				max-height: 320px;
+				opacity: 1;
+				pointer-events: auto;
+				transform: translateY(0);
+			}
+
+			.content-panel {
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+
+			.post-list {
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+
+			.post-card {
+				background: rgba(var(--surface-rgb), 0.95);
+				border: 1px solid rgb(var(--gray-light));
+				border-radius: 18px;
+				box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+				overflow: hidden;
+			}
+
+			.post-link {
+				display: flex;
+				flex-direction: column;
+				gap: 0.9rem;
+				padding: 1.2rem 1.3rem;
+				text-decoration: none;
+				transition:
+					background 0.2s ease,
+					transform 0.2s ease,
+					box-shadow 0.2s ease;
+			}
+
+			.post-link:hover {
+				background: rgba(var(--accent-rgb), 0.03);
+				box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.1);
+				transform: translateY(-1px);
+			}
+
+			.post-title {
+				color: rgb(var(--black));
+				font-size: 1.3rem;
+				margin: 0;
+			}
+
+			.post-description {
+				color: rgb(var(--gray-dark));
+				font-size: 0.98rem;
+				line-height: 1.65;
+				margin: 0;
+			}
+
+			.empty-state {
+				color: rgb(var(--gray));
+				padding: 1rem 0;
+			}
+
+			@media (max-width: 960px) {
+				.blog-directory {
+					grid-template-columns: 1fr;
+				}
+
+				.sidebar {
+					position: static;
+				}
+
+				.sidebar-inner {
+					max-height: none;
+					overflow: visible;
+				}
+			}
+
+			@media (max-width: 720px) {
+				main {
+					max-width: calc(100% - 1rem);
+				}
+
+				.post-link {
+					padding: 1rem;
+				}
+
+				.post-title {
+					font-size: 1.12rem;
+				}
+
+				.post-description {
+					font-size: 0.92rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="blog-directory">
+				<aside class="sidebar">
+					<div class="sidebar-inner">
+						<details class="filter-group" open>
+							<summary>Categories</summary>
+							<div class="filter-list">
+								{
+									categoryOptions.map((item) => (
+										<button class="filter-option" data-filter-group="topic" data-filter-value={item.label} type="button">
+											<span>{item.label}</span>
+											<span class="filter-count">{item.count}</span>
+										</button>
+									))
+								}
+							</div>
+						</details>
+
+						<details class="filter-group" open>
+							<summary>Competition</summary>
+							<div class="year-groups">
+								{
+									competitionGroups.map((group) => (
+										<div class="year-group">
+											<div class="year-row">
+												<button
+													class="filter-option year-option"
+													data-filter-group="competitionYear"
+													data-filter-value={group.label}
+													type="button"
+												>
+													<span>{group.label}</span>
+													<span class="filter-count">{group.count}</span>
+												</button>
+											</div>
+											<div class="competition-sublist">
+												{
+													group.competitions.map((item) => (
+														<button
+															class="filter-option"
+															data-filter-group="competition"
+															data-filter-value={item.label}
+															type="button"
+														>
+															<span>{item.label}</span>
+															<span class="filter-count">{item.count}</span>
+														</button>
+													))
+												}
+											</div>
+										</div>
+									))
+								}
+							</div>
+						</details>
+					</div>
+				</aside>
+
+				<section class="content-panel">
+					<div class="post-list" id="post-list">
+						{
+							posts.map((post) => (
+								<article
+									class="post-card"
+									data-topic={post.data.topic}
+									data-competition={post.data.competition}
+									data-group-label={getCompetitionGroupLabel(post)}
+								>
+									<a class="post-link" href={`${basePath}blog/${post.id}/`}>
+										<PostMetaBadges
+											competition={post.data.competition}
+											topic={post.data.topic}
+											reviewLabel={post.data.reviewLabel}
+											sourceStatus={post.data.sourceStatus}
+										/>
+										<h2 class="post-title">{post.data.title}</h2>
+										<p class="post-description">{post.data.description}</p>
+									</a>
+								</article>
+							))
+						}
+					</div>
+					<p class="empty-state" id="empty-state" hidden>当前筛选下没有匹配文章。</p>
+				</section>
+			</div>
+		</main>
+		<FloatingActions />
+
+		<script is:inline>
+			const filterButtons = Array.from(document.querySelectorAll('.filter-option'));
+			const yearGroups = Array.from(document.querySelectorAll('.year-group'));
+			const cards = Array.from(document.querySelectorAll('.post-card'));
+			const emptyState = document.getElementById('empty-state');
+
+			let activeFilter = null;
+
+			const renderButtons = () => {
+				filterButtons.forEach((button) => {
+					const isActive =
+						activeFilter &&
+						activeFilter.group === button.dataset.filterGroup &&
+						activeFilter.value === button.dataset.filterValue;
+					button.dataset.active = isActive ? 'true' : 'false';
+					button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+				});
+			};
+
+			const renderYearGroups = () => {
+				yearGroups.forEach((group) => {
+					const yearButton = group.querySelector('[data-filter-group="competitionYear"]');
+					const competitionButtons = Array.from(group.querySelectorAll('[data-filter-group="competition"]'));
+					const matchesSelectedYear =
+						activeFilter &&
+						activeFilter.group === 'competitionYear' &&
+						yearButton?.dataset.filterValue === activeFilter.value;
+					const matchesSelectedCompetition =
+						activeFilter &&
+						activeFilter.group === 'competition' &&
+						competitionButtons.some((button) => button.dataset.filterValue === activeFilter.value);
+					group.dataset.expanded = matchesSelectedYear || matchesSelectedCompetition ? 'true' : 'false';
+				});
+			};
+
+			const renderCards = () => {
+				let visible = 0;
+				cards.forEach((card) => {
+					const matches =
+						!activeFilter ||
+						(activeFilter.group === 'competitionYear'
+							? card.dataset.groupLabel === activeFilter.value
+							: card.dataset[activeFilter.group] === activeFilter.value);
+					card.hidden = !matches;
+					if (matches) visible += 1;
+				});
+				emptyState.hidden = visible !== 0;
+			};
+
+			const render = () => {
+				renderButtons();
+				renderYearGroups();
+				renderCards();
+			};
+
+			const scrollToTop = () => {
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			};
+
+			filterButtons.forEach((button) => {
+				button.addEventListener('click', () => {
+					const next = {
+						group: button.dataset.filterGroup,
+						value: button.dataset.filterValue,
+					};
+
+					if (
+						activeFilter &&
+						activeFilter.group === next.group &&
+						activeFilter.value === next.value
+					) {
+						activeFilter = null;
+					} else {
+						activeFilter = next;
+					}
+
+					render();
+					scrollToTop();
+					button.blur();
+				});
+			});
+
+			render();
+		</script>
+	</body>
+</html>

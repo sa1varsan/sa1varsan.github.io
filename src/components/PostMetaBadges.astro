@@ -1,0 +1,53 @@
+---
+interface Props {
+	topic: string;
+	competition: string;
+	reviewLabel?: string;
+	sourceStatus?: string;
+}
+
+const { topic, competition, reviewLabel, sourceStatus } = Astro.props;
+---
+
+<div class="meta-badges">
+	{reviewLabel && <span class="badge badge-review">{reviewLabel}</span>}
+	{sourceStatus && <span class="badge badge-source">{sourceStatus}</span>}
+	<span class="badge badge-competition">{competition}</span>
+	<span class="badge badge-topic">{topic}</span>
+</div>
+
+<style>
+	.meta-badges {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.badge {
+		border-radius: 999px;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		padding: 0.28rem 0.72rem;
+	}
+
+	.badge-competition {
+		background: rgba(var(--gray-light), 0.95);
+		color: rgb(var(--gray-dark));
+	}
+
+	.badge-review {
+		background: rgba(255, 153, 0, 0.16);
+		color: #8a4d00;
+	}
+
+	.badge-source {
+		background: rgba(0, 138, 92, 0.14);
+		color: #0b6a49;
+	}
+
+	.badge-topic {
+		background: rgba(var(--accent-rgb), 0.12);
+		color: var(--accent-dark);
+	}
+</style>
