@@ -166,6 +166,22 @@ pre > code {
 	all: unset;
 	font-size: inherit;
 }
+
+.astro-code .line::before,
+.astro-code code .line::before {
+	content: none !important;
+	display: none !important;
+}
+
+.astro-code,
+.astro-code code {
+	counter-reset: none !important;
+}
+
+.astro-code .line,
+.astro-code code .line {
+	counter-increment: none !important;
+}
 blockquote {
 	border-left: 4px solid var(--accent);
 	padding: 0 0 0 20px;
